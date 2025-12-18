@@ -61,13 +61,20 @@
         <option value="BDP">BDP</option>
         <option value="MDP">MDP</option>
     </select>
+
     <!-- Location Dropdown -->
     <label for="locationSelect" style="font-weight:bold;">Location:</label>
     <select id="locationSelect" onchange="renderScreens()" style="margin: 0 0 16px 8px; padding:4px 8px;">
         <option value="ALL">All</option>
     </select>
+
     <!-- Add Screen Modal Trigger -->
     <button onclick="openAddModal()" style="margin-bottom:16px;">Add</button>
+
+    <!-- Import Config Button and File Input -->
+    <input type="file" id="importConfigInput" accept=".json" style="display:none" onchange="importConfigFile(event)">
+    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import
+        Config</button>
 
     <!-- Modal Structure -->
     <div id="addScreenModal"
@@ -266,6 +273,29 @@
 
         loadScreens();
         renderScreens();
+
+        function importConfigFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const importedScreens = JSON.parse(e.target.result);
+                    if (Array.isArray(importedScreens)) {
+                        screens = importedScreens;
+                        saveScreens();
+                        renderScreens();
+                        alert('Config imported successfully.');
+                    } else {
+                        alert('Invalid config file format.');
+                    }
+                } catch (err) {
+                    alert('Error parsing config file.');
+                }
+                event.target.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 
