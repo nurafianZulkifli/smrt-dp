@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Screen Management | SMRT Buses</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f7f7f7;
+        }
+
+        h1 {
+            color: #b00;
+        }
+
+        .screen-list {
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .actions button {
+            margin-right: 8px;
+        }
+
+        .add-form {
+            margin: 20px 0;
+        }
+
+        .add-form input {
+            padding: 6px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Screen Management</h1>
+    <!-- Type Dropdown -->
+    <label for="typeSelect" style="font-weight:bold;">Type:</label>
+    <select id="typeSelect" onchange="renderScreens()" style="margin: 0 16px 16px 8px; padding:4px 8px;">
+        <option value="ALL">All</option>
+        <option value="BDP">BDP</option>
+        <option value="MDP">MDP</option>
+    </select>
+    <!-- Location Dropdown -->
+    <label for="locationSelect" style="font-weight:bold;">Location:</label>
+    <select id="locationSelect" onchange="renderScreens()" style="margin: 0 0 16px 8px; padding:4px 8px;">
+        <option value="ALL">All</option>
+    </select>
+    <!-- Add Screen Modal Trigger -->
+    <button onclick="openAddModal()" style="margin-bottom:16px;">Add</button>
+
+    <!-- Modal Structure -->
+    <div id="addScreenModal"
+        style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3);">
+        <div
+            style="background:#fff; max-width:400px; margin:100px auto; padding:24px 24px 16px 24px; border-radius:8px; box-shadow:0 2px 16px rgba(0,0,0,0.2); position:relative;">
+            <h2 style="margin-top:0;">Add Screen</h2>
+            <div class="add-form" style="margin:0;">
+                <input type="text" id="category" placeholder="Category (e.g. cck)">
+                <input type="text" id="screenType" placeholder="Type (bdp/mdp)">
+                <input type="text" id="screenName" placeholder="Screen Name (e.g. cck-berth1)">
+                <input type="text" id="screenUrl" placeholder="Screen URL (e.g. smrt-bdp/cck/smrt-bdp-berth1.html)">
+            </div>
+            <div style="margin-top:16px; text-align:right;">
+                <button onclick="closeAddModal()" style="margin-right:8px;">Cancel</button>
+                <button onclick="addScreen()">Add Screen</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sectionsContainer">
+        <!-- Sections will be rendered here -->
+    </div>
+
+    <script>
+        // Load from localStorage or use example initial data
+        let screens = [];
+        const STORAGE_KEY = 'screenManagerScreens';
+
+        function loadScreens() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    screens = JSON.parse(data);
+                } catch {
+                    screens = [];
+                }
+            } else {
+                screens = [];
+            }
+        }
+
+        function saveScreens() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(screens));
+        }
+
+        function getSections() {
+            const sections = {};
+            screens.forEach((screen, idx) => {
+                const section = screen.name.split('-')[0].toUpperCase();
+                if (!sections[section]) sections[section] = [];
+                sections[section].push({ ...screen, idx });
+            });
+            return sections;
+        }
+
+        function getAllLocations(typeFilter = "ALL") {
+            // Get unique section names from screens, filtered by type if needed
+            const locations = new Set();
+            screens.forEach(screen => {
+                if (typeFilter === "ALL" || (screen.type && screen.type.toUpperCase() === typeFilter)) {
+                    const section = screen.name.split('-')[0].toUpperCase();
+                    locations.add(section);
+                }
+            });
+            return Array.from(locations).sort();
+        }
+
+        function renderLocationDropdown() {
+            const select = document.getElementById('locationSelect');
+            const type = document.getElementById('typeSelect').value;
+            // Save current selection
+            const prev = select.value;
+            // Remove all except "All"
+            select.innerHTML = '<option value="ALL">All</option>';
+            getAllLocations(type).forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                select.appendChild(opt);
+            });
+            // Restore previous selection if possible
+            if ([...select.options].some(o => o.value === prev)) {
+                select.value = prev;
+            }
+        }
+
+        function renderScreens() {
+            renderLocationDropdown();
+            const container = document.getElementById('sectionsContainer');
+            container.innerHTML = '';
+            const sections = getSections();
+            const selectedLoc = document.getElementById('locationSelect').value;
+            const selectedType = document.getElementById('typeSelect').value;
+            let filteredSections = {};
+
+            // Filter screens by type and location
+            Object.keys(sections).forEach(section => {
+                const filtered = sections[section].filter(screen => {
+                    const typeMatch = selectedType === "ALL" || (screen.type && screen.type.toUpperCase() === selectedType);
+                    const locMatch = selectedLoc === "ALL" || section === selectedLoc;
+                    return typeMatch && locMatch;
+                });
+                if (filtered.length) filteredSections[section] = filtered;
+            });
+
+            Object.keys(filteredSections).sort().forEach(section => {
+                const div = document.createElement('div');
+                div.className = 'screen-list';
+                div.innerHTML = `
+                <h2>${section}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Screen Name</th>
+                            <th>Type</th>
+                            <th>Screen URL</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredSections[section].map(screen => `
+                            <tr>
+                                <td>${screen.name}</td>
+                                <td>${screen.type ? screen.type.toUpperCase() : ''}</td>
+                                <td><a href="${screen.url}" target="_blank">${screen.url}</a></td>
+                                <td class="actions">
+                                    <button onclick="editScreen(${screen.idx})">Edit</button>
+                                    <button onclick="removeScreen(${screen.idx})">Remove</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+                container.appendChild(div);
+            });
+        }
+
+        // Modal logic
+        function openAddModal() {
+            document.getElementById('addScreenModal').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('category').focus();
+            }, 100);
+        }
+        function closeAddModal() {
+            document.getElementById('addScreenModal').style.display = 'none';
+            document.getElementById('category').value = '';
+            document.getElementById('screenType').value = '';
+            document.getElementById('screenName').value = '';
+            document.getElementById('screenUrl').value = '';
+        }
+
+        // Override addScreen to close modal after adding
+        function addScreen() {
+            const category = document.getElementById('category').value.trim();
+            const type = document.getElementById('screenType').value.trim().toUpperCase();
+            const name = document.getElementById('screenName').value.trim();
+            const url = document.getElementById('screenUrl').value.trim();
+            if (!category || !type || !name || !url) {
+                alert('Please enter category, type, name and URL.');
+                return;
+            }
+            // Ensure screen name starts with category
+            let finalName = name;
+            if (!name.toLowerCase().startsWith(category.toLowerCase() + '-')) {
+                finalName = category.toLowerCase() + '-' + name;
+            }
+            screens.push({ name: finalName, url, type });
+            saveScreens();
+            closeAddModal();
+            renderScreens();
+        }
+
+        function removeScreen(idx) {
+            if (confirm('Remove this screen?')) {
+                screens.splice(idx, 1);
+                saveScreens();
+                renderScreens();
+            }
+        }
+
+        function editScreen(idx) {
+            const screen = screens[idx];
+            const newName = prompt('Edit screen name:', screen.name);
+            if (newName === null) return;
+            const newType = prompt('Edit type (BDP/MDP):', screen.type || '');
+            if (newType === null) return;
+            const newUrl = prompt('Edit screen URL:', screen.url);
+            if (newUrl === null) return;
+            screens[idx] = { name: newName.trim(), url: newUrl.trim(), type: newType.trim().toUpperCase() };
+            saveScreens();
+            renderScreens();
+        }
+
+        loadScreens();
+        renderScreens();
+    </script>
+</body>
+
+</html>
