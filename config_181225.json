@@ -28,5 +28,10 @@
         "name": "cck-E1",
         "url": "smrt-mdp/cck.html",
         "type": "MDP"
+    },
+    {
+        "name": "bnl-E1",
+        "url": "smrt-mdp/bnl.html",
+        "type": "MDP"
     }
 ]
