@@ -151,7 +151,7 @@
             } catch (err) {
                 console.error('Failed to fetch bus data', err);
                 document.getElementById('bus-table-body').innerHTML = '<tr><td colspan="3">Unable to load data</td></tr>';
-                document.getElementById('page-indicator').textContent = 'Page 1/1';
+                // document.getElementById('page-indicator').textContent = 'Page 1/1';
             }
         }
 
@@ -163,7 +163,7 @@
             tbody.innerHTML = '';
             if (!allServices.length) {
                 tbody.innerHTML = '<tr><td colspan="3">No bus data available</td></tr>';
-                document.getElementById('page-indicator').textContent = 'Page 1/1';
+                // document.getElementById('page-indicator').textContent = 'Page 1/1';
                 return;
             }
 

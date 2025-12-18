@@ -274,28 +274,35 @@
         loadScreens();
         renderScreens();
 
-        function importConfigFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const importedScreens = JSON.parse(e.target.result);
-                    if (Array.isArray(importedScreens)) {
-                        screens = importedScreens;
-                        saveScreens();
-                        renderScreens();
-                        alert('Config imported successfully.');
-                    } else {
-                        alert('Invalid config file format.');
+function importConfigFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const importedScreens = JSON.parse(e.target.result);
+            if (Array.isArray(importedScreens)) {
+                // Ensure each screen has a category field
+                screens = importedScreens.map(screen => {
+                    let category = screen.category;
+                    if (!category && screen.name) {
+                        category = screen.name.split('-')[0].toLowerCase();
                     }
-                } catch (err) {
-                    alert('Error parsing config file.');
-                }
-                event.target.value = ''; // Reset input
-            };
-            reader.readAsText(file);
+                    return { ...screen, category };
+                });
+                saveScreens();
+                renderScreens();
+                alert('Config imported successfully.');
+            } else {
+                alert('Invalid config file format.');
+            }
+        } catch (err) {
+            alert('Error parsing config file.');
         }
+        event.target.value = ''; // Reset input
+    };
+    reader.readAsText(file);
+}
     </script>
 </body>
 
