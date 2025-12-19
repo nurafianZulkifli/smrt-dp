@@ -75,7 +75,8 @@ table {
 
 .svc-no {
     font-weight: bold;
-    font-size: 90px;
+    font-size: 110px;
+    text-align: center;
     padding-bottom: 0em;
     padding-top: 0em;
 }
@@ -99,11 +100,6 @@ tr {
     border-bottom: 1px solid #000;
 }
 
-td:first-child {
-    font-weight: bold;
-    font-size: 90px;
-    text-align: center;
-}
 
 tbody tr:last-child {
     border-bottom: none;
@@ -174,6 +170,7 @@ tbody tr:last-child {
     align-items: center;
     justify-content: center;
     width: 100%;
+    font-size: 90px;
 }
 
 .time-icon-wrap span {
