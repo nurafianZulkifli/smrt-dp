@@ -3,17 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Berth 5 | SMRT Buses</title>
+    <title>Bukit Panjang ITH | SMRT Buses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../css/bdp.css">
+    <link rel="stylesheet" href="css/mdp.css">
 </head>
 
 <body>
     <div class="header">
         <div class="logo">
-            <img src="../../assets/smrt.png" alt="SMRT Logo">
+            <img src="../assets/smrt.png" alt="SMRT Logo">
         </div>
-        <div class="title">Berth 5</div>
+        <div class="title"></div>
         <div class="clock">
             <div class="clock-time" id="clock-time"></div>
             <div class="clock-date" id="clock-date"></div>
@@ -23,14 +23,16 @@
         <table>
             <colgroup>
                 <col class="col-service">
+                <col class="col-berth">
                 <col class="col-departure1">
                 <col class="col-departure2">
             </colgroup>
             <thead>
                 <tr class="redbar-head">
                     <th>Services</th>
+                    <th>Berth</th>
                     <th>Departure Times</th>
-                    <th id="page-indicator"></th>
+                    <th id="page-indicator">Page 1/1</th>
                 </tr>
             </thead>
             <tbody id="bus-table-body">
@@ -42,7 +44,8 @@
     <div class="ticker-wrap">
         <div class="ticker">
             <span id="ticker-text">
-                Welcome to Choa Chu Kang Bus Interchange!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT Buses.
+                Welcome to Bukit Panjang Integrated Transport Hub!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT
+                Buses.
             </span>
         </div>
     </div>
@@ -71,23 +74,10 @@
         let berthMap = {};
         let serviceOrder = [];
 
-        let allowedServices = [];
-
-        // Fetch allowed services from berth5.json
-        async function fetchAllowedServices() {
-            try {
-                const response = await fetch('json/berth5.json');
-                allowedServices = await response.json();
-            } catch (err) {
-                console.error('Failed to fetch allowed services', err);
-                allowedServices = [];
-            }
-        }
-
         // Fetch berth allocation map
         async function fetchBerthMap() {
             try {
-                const response = await fetch('json/berth-allocation-cck.json');
+                const response = await fetch('json/berth-allocation-bpj.json');
                 const data = await response.json();
                 berthMap = data;
                 serviceOrder = Array.isArray(data.order) ? data.order : [];
@@ -98,10 +88,10 @@
             }
         }
 
-        // Modify fetchBusData to filter by allowedServices
+        // Fetch bus arrival data
         async function fetchBusData() {
             try {
-                const response = await fetch('https://bat-lta-9eb7bbf231a2.herokuapp.com/bus-arrivals?BusStopCode=44009');
+                const response = await fetch('https://bat-lta-9eb7bbf231a2.herokuapp.com/bus-arrivals?BusStopCode=45009');
                 const data = await response.json();
                 let services = [];
                 if (Array.isArray(data)) {
@@ -121,25 +111,8 @@
                     }
                 }
 
-                // Filter by allowedServices if set
-                if (allowedServices.length) {
-                    services = services.filter(bus =>
-                        allowedServices.includes(bus.ServiceNo || bus.service || "")
-                    );
-                }
-
                 // Custom sort if order is defined
-                if (allowedServices.length) {
-                    services.sort((a, b) => {
-                        const aIdx = allowedServices.indexOf(a.ServiceNo || a.service || "");
-                        const bIdx = allowedServices.indexOf(b.ServiceNo || b.service || "");
-                        if (aIdx === -1 && bIdx === -1) return 0;
-                        if (aIdx === -1) return 1;
-                        if (bIdx === -1) return -1;
-                        return aIdx - bIdx;
-                    });
-                } else if (serviceOrder.length) {
-                    // fallback to serviceOrder if allowedServices is not set
+                if (serviceOrder.length) {
                     services.sort((a, b) => {
                         const aIdx = serviceOrder.indexOf(a.ServiceNo || a.service || "");
                         const bIdx = serviceOrder.indexOf(b.ServiceNo || b.service || "");
@@ -149,31 +122,34 @@
                         return aIdx - bIdx;
                     });
                 }
+
                 allServices = services;
+                // currentPage = 1;
                 renderTable();
                 startPageLoop();
             } catch (err) {
                 console.error('Failed to fetch bus data', err);
-                document.getElementById('bus-table-body').innerHTML = '<tr><td colspan="3">Unable to load data</td></tr>';
-                // document.getElementById('page-indicator').textContent = 'Page 1/1'; --provisional
+                document.getElementById('bus-table-body').innerHTML = '<tr><td colspan="4">Unable to load data</td></tr>';
+                document.getElementById('page-indicator').textContent = 'Page 1/1';
             }
         }
 
-        // Render bus arrival table
+        // Render table with dynamic pagination
         function renderTable() {
             const tbody = document.getElementById('bus-table-body');
             tbody.innerHTML = '';
             if (!allServices.length) {
-                tbody.innerHTML = '<tr><td colspan="3">No bus data available</td></tr>';
-                // document.getElementById('page-indicator').textContent = 'Page 1/1'; --provisional
+                tbody.innerHTML = '<tr><td colspan="4">No bus data available</td></tr>';
+                document.getElementById('page-indicator').textContent = 'Page 1/1';
                 return;
             }
 
-            // Render all rows offscreen to measure how many fit ---
+            // Render all rows offscreen to measure how many fit
             // Create a fragment to avoid flicker
             const fragment = document.createDocumentFragment();
             allServices.forEach(bus => {
                 const service = bus.ServiceNo || bus.service || '';
+                const berth = berthMap[service] || bus.Berth || bus.berth || '';
                 let next = bus.NextBus?.EstimatedArrival || bus.next || '';
                 let next2 = bus.NextBus2?.EstimatedArrival || bus.next2 || '';
                 function formatTime(val) {
@@ -196,27 +172,27 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td class="svc-no">${service}</td>
+            <td class="berth">${berth}</td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
-                    ${bus.NextBus?.Type ? `<img src="../../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 100px;">` : ''}
+                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
                 </span>
             </td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next2 ? next2 : ''}</span>
-                    ${bus.NextBus2?.Type ? `<img src="../../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 100px;">` : ''}
+                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
                 </span>
             </td>
         `;
                 fragment.appendChild(row);
             });
-
             // Add to DOM but keep hidden for measurement
             tbody.appendChild(fragment);
             tbody.style.visibility = 'hidden';
 
-            // Measure how many rows fit in the visible area ---
+            // Measure how many rows fit before the ticker
             const ticker = document.querySelector('.ticker-wrap');
             const tickerRect = ticker.getBoundingClientRect();
             const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -242,6 +218,7 @@
             for (let i = start; i < end && i < allServices.length; i++) {
                 const bus = allServices[i];
                 const service = bus.ServiceNo || bus.service || '';
+                const berth = berthMap[service] || bus.Berth || bus.berth || '';
                 let next = bus.NextBus?.EstimatedArrival || bus.next || '';
                 let next2 = bus.NextBus2?.EstimatedArrival || bus.next2 || '';
                 function formatTime(val) {
@@ -264,16 +241,17 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td class="svc-no">${service}</td>
+            <td class="berth">${berth}</td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
-                    ${bus.NextBus?.Type ? `<img src="../../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 100px;">` : ''}
+                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
                 </span>
             </td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next2 ? next2 : ''}</span>
-                    ${bus.NextBus2?.Type ? `<img src="../../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 100px;">` : ''}
+                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
                 </span>
             </td>
         `;
@@ -281,11 +259,11 @@
             }
             tbody.style.visibility = '';
 
-            // Page Indicator (Provisional - can be enabled if needed)
-            // document.getElementById('page-indicator').textContent = `Page ${currentPage}/${totalPages}`;
+            // Update page indicator
+            document.getElementById('page-indicator').textContent = `Page ${currentPage}/${totalPages}`;
         }
 
-        // Start automatic page looping
+        // Patch startPageLoop to use dynamicPageSize if set
         function startPageLoop() {
             if (pageInterval) clearInterval(pageInterval);
             pageInterval = setInterval(() => {
@@ -297,12 +275,27 @@
         }
 
         async function init() {
-            await fetchAllowedServices();
             await fetchBerthMap();
             await fetchBusData();
             setInterval(fetchBusData, 30000);
         }
         init();
+
+        // Responsive title for < 1500px
+        function updateTitleText() {
+            const titleEl = document.querySelector('.title');
+            if (!titleEl) return;
+            if (window.innerWidth < 1120) {
+                titleEl.textContent = "BPJ ITH";
+            } else if (window.innerWidth < 1500) {
+                titleEl.textContent = "Bt Panjang ITH";
+            } else {
+                titleEl.textContent = "Bukit Panjang ITH";
+            }
+        }
+        window.addEventListener('resize', updateTitleText);
+        window.addEventListener('DOMContentLoaded', updateTitleText);
+        updateTitleText();
     </script>
 </body>
 

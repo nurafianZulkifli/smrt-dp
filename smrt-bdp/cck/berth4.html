@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Berth 4 | SMRT Buses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="css/bdp.css">
+    <link rel="stylesheet" href="../css/bdp.css">
 </head>
 
 <body>
@@ -15,8 +15,8 @@
         </div>
         <div class="title">Berth 4</div>
         <div class="clock">
-            <div class="clock-time" id="clock-time">20:18</div>
-            <div class="clock-date" id="clock-date">Wed, Dec 17</div>
+            <div class="clock-time" id="clock-time"></div>
+            <div class="clock-date" id="clock-date"></div>
         </div>
     </div>
     <div class="table-responsive">
@@ -47,8 +47,10 @@
         </div>
     </div>
 
+
+    <!------------------------------------ Functionalities ------------------------------------>
     <script>
-        // Live clock
+        // Clock Update
         function updateClock() {
             const now = new Date();
             const pad = n => n.toString().padStart(2, '0');
@@ -71,9 +73,10 @@
 
         let allowedServices = [];
 
+        // Fetch allowed services from berth4.json
         async function fetchAllowedServices() {
             try {
-                const response = await fetch('berth4.json');
+                const response = await fetch('json/berth4.json');
                 allowedServices = await response.json();
             } catch (err) {
                 console.error('Failed to fetch allowed services', err);
@@ -81,9 +84,10 @@
             }
         }
 
+        // Fetch berth allocation map
         async function fetchBerthMap() {
             try {
-                const response = await fetch('berth-allocation-cck.json');
+                const response = await fetch('json/berth-allocation-cck.json');
                 const data = await response.json();
                 berthMap = data;
                 serviceOrder = Array.isArray(data.order) ? data.order : [];
@@ -151,23 +155,21 @@
             } catch (err) {
                 console.error('Failed to fetch bus data', err);
                 document.getElementById('bus-table-body').innerHTML = '<tr><td colspan="3">Unable to load data</td></tr>';
-                // document.getElementById('page-indicator').textContent = 'Page 1/1';
+                // document.getElementById('page-indicator').textContent = 'Page 1/1'; --provisional
             }
         }
 
-
-
-
+        // Render bus arrival table
         function renderTable() {
             const tbody = document.getElementById('bus-table-body');
             tbody.innerHTML = '';
             if (!allServices.length) {
                 tbody.innerHTML = '<tr><td colspan="3">No bus data available</td></tr>';
-                // document.getElementById('page-indicator').textContent = 'Page 1/1';
+                // document.getElementById('page-indicator').textContent = 'Page 1/1'; --provisional
                 return;
             }
 
-            // --- Step 1: Render all rows offscreen to measure how many fit ---
+            // Render all rows offscreen to measure how many fit ---
             // Create a fragment to avoid flicker
             const fragment = document.createDocumentFragment();
             allServices.forEach(bus => {
@@ -193,7 +195,7 @@
                 next2 = next2 ? formatTime(next2) : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${service}</td>
+            <td class="svc-no">${service}</td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
@@ -209,11 +211,12 @@
         `;
                 fragment.appendChild(row);
             });
+
             // Add to DOM but keep hidden for measurement
             tbody.appendChild(fragment);
             tbody.style.visibility = 'hidden';
 
-            // --- Step 2: Measure how many rows fit before the ticker ---
+            // Measure how many rows fit in the visible area ---
             const ticker = document.querySelector('.ticker-wrap');
             const tickerRect = ticker.getBoundingClientRect();
             const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -229,7 +232,7 @@
             if (maxRows < 1) maxRows = 1;
             window.dynamicPageSize = maxRows;
 
-            // --- Step 3: Render only the rows for the current page ---
+            // Render only the rows for the current page
             const totalPages = Math.max(1, Math.ceil(allServices.length / window.dynamicPageSize));
             if (currentPage > totalPages) currentPage = 1;
             if (currentPage < 1) currentPage = 1;
@@ -260,7 +263,7 @@
                 next2 = next2 ? formatTime(next2) : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${service}</td>
+            <td class="svc-no">${service}</td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
@@ -278,11 +281,11 @@
             }
             tbody.style.visibility = '';
 
-            // --- Step 4: Update page indicator ---
+            // Page Indicator (Provisional - can be enabled if needed)
             // document.getElementById('page-indicator').textContent = `Page ${currentPage}/${totalPages}`;
         }
 
-        // Patch startPageLoop to use dynamicPageSize if set
+        // Start automatic page looping
         function startPageLoop() {
             if (pageInterval) clearInterval(pageInterval);
             pageInterval = setInterval(() => {
@@ -290,7 +293,7 @@
                 const totalPages = Math.ceil(allServices.length / dynamicSize) || 1;
                 currentPage = currentPage >= totalPages ? 1 : currentPage + 1;
                 renderTable();
-            }, 6000);
+            }, 8000);
         }
 
         async function init() {

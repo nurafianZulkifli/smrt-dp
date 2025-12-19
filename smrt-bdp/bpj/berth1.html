@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Berth 5 | SMRT Buses</title>
+    <title>Berth 1 | SMRT Buses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../css/bdp.css">
 </head>
@@ -13,7 +13,7 @@
         <div class="logo">
             <img src="../../assets/smrt.png" alt="SMRT Logo">
         </div>
-        <div class="title">Berth 5</div>
+        <div class="title">Berth 1</div>
         <div class="clock">
             <div class="clock-time" id="clock-time"></div>
             <div class="clock-date" id="clock-date"></div>
@@ -42,7 +42,8 @@
     <div class="ticker-wrap">
         <div class="ticker">
             <span id="ticker-text">
-                Welcome to Choa Chu Kang Bus Interchange!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT Buses.
+                Welcome to Bukit Panjang Integrated Transport Hub!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT
+                Buses.
             </span>
         </div>
     </div>
@@ -73,10 +74,10 @@
 
         let allowedServices = [];
 
-        // Fetch allowed services from berth5.json
+        // Fetch allowed services from berth1.json
         async function fetchAllowedServices() {
             try {
-                const response = await fetch('json/berth5.json');
+                const response = await fetch('json/berth1.json');
                 allowedServices = await response.json();
             } catch (err) {
                 console.error('Failed to fetch allowed services', err);
@@ -87,7 +88,7 @@
         // Fetch berth allocation map
         async function fetchBerthMap() {
             try {
-                const response = await fetch('json/berth-allocation-cck.json');
+                const response = await fetch('json/berth-allocation-bpj.json');
                 const data = await response.json();
                 berthMap = data;
                 serviceOrder = Array.isArray(data.order) ? data.order : [];
@@ -101,7 +102,7 @@
         // Modify fetchBusData to filter by allowedServices
         async function fetchBusData() {
             try {
-                const response = await fetch('https://bat-lta-9eb7bbf231a2.herokuapp.com/bus-arrivals?BusStopCode=44009');
+                const response = await fetch('https://bat-lta-9eb7bbf231a2.herokuapp.com/bus-arrivals?BusStopCode=45009');
                 const data = await response.json();
                 let services = [];
                 if (Array.isArray(data)) {
@@ -304,6 +305,7 @@
         }
         init();
     </script>
+
 </body>
 
 </html>

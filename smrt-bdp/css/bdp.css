@@ -49,12 +49,11 @@ body {
 thead .redbar-head th {
     background: #e60012;
     color: #fff;
-    font-size: 45px;
-    font-weight: 500;
-    padding-left: 0.3em;
-    padding-right: 0.3em;
-    padding-bottom: 0.3em;
-    padding-top: 0.3em;
+    font-size: 55px;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+    padding-bottom: 0.1em;
+    padding-top: 0.1em;
     border: none;
     text-align: center;
 }
@@ -74,10 +73,17 @@ table {
     font-size: 2rem;
 }
 
+.svc-no {
+    font-weight: bold;
+    font-size: 90px;
+    padding-bottom: 0em;
+    padding-top: 0em;
+}
+
 th,
 td {
     padding-top: 0.1em;
-    padding-bottom: 0.3em;
+    padding-bottom: 0.1em;
     text-align: center;
     font-size: 70px;
 }
@@ -95,7 +101,7 @@ tr {
 
 td:first-child {
     font-weight: bold;
-    font-size: 80px;
+    font-size: 90px;
     text-align: center;
 }
 
