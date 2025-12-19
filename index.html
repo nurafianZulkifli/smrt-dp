@@ -73,32 +73,28 @@
 
     <!-- Import Config Button and File Input -->
     <input type="file" id="importConfigInput" accept=".json" style="display:none" onchange="importConfigFile(event)">
-    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import
-        Config</button>
+    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import Config</button>
+
+    <!-- Ticker Message Setting -->
+    <div style="margin: 24px 0 16px 0; padding: 40px 40px 40px 30px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
+        <h3 style="margin-top:0;">Override Ticker Message</h3>
+        <textarea id="tickerOverride" rows="2" style="width:100%;padding:8px;resize: vertical;" placeholder="Leave blank to use default/unified ticker message"></textarea>
+        <div style="margin-top:8px; text-align:right;">
+            <button onclick="saveTickerOverride()" style="margin-right:8px;">Save</button>
+            <button onclick="clearTickerOverride()">Clear</button>
+        </div>
+        <div id="tickerStatus" style="color:green; margin-top:8px; display:none;"></div>
+    </div>
 
     <!-- Modal Structure -->
-    <div id="addScreenModal"
-        style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3);">
-        <div
-            style="background:#fff; max-width:400px; margin:100px auto; padding:24px 24px 16px 24px; border-radius:8px; box-shadow:0 2px 16px rgba(0,0,0,0.2); position:relative;">
-            <h2 style="margin-top:0;">Add Screen</h2>
-            <div class="add-form" style="margin:0;">
-                <input type="text" id="category" placeholder="Category (e.g. cck)">
-                <input type="text" id="screenType" placeholder="Type (bdp/mdp)">
-                <input type="text" id="screenName" placeholder="Screen Name (e.g. cck-berth1)">
-                <input type="text" id="screenUrl" placeholder="Screen URL (e.g. smrt-bdp/cck/smrt-bdp-berth1.html)">
-            </div>
-            <div style="margin-top:16px; text-align:right;">
-                <button onclick="closeAddModal()" style="margin-right:8px;">Cancel</button>
-                <button onclick="addScreen()">Add Screen</button>
-            </div>
-        </div>
-    </div>
+    <!-- ...existing modal code... -->
 
     <div id="sectionsContainer">
         <!-- Sections will be rendered here -->
     </div>
 
+
+    <!------------------------------------ Functionalities ------------------------------------>
     <script>
         // Load from localStorage or use example initial data
         let screens = [];
@@ -303,6 +299,42 @@ function importConfigFile(event) {
     };
     reader.readAsText(file);
 }
+
+ // --- Ticker Message Override Logic ---
+        const TICKER_KEY = 'screenManagerTickerOverride';
+
+        function loadTickerOverride() {
+            const val = localStorage.getItem(TICKER_KEY) || '';
+            document.getElementById('tickerOverride').value = val;
+        }
+
+        function saveTickerOverride() {
+            const val = document.getElementById('tickerOverride').value.trim();
+            localStorage.setItem(TICKER_KEY, val);
+            showTickerStatus('Ticker override saved.');
+        }
+
+        function clearTickerOverride() {
+            localStorage.removeItem(TICKER_KEY);
+            document.getElementById('tickerOverride').value = '';
+            showTickerStatus('Ticker override cleared.');
+        }
+
+        function showTickerStatus(msg) {
+            const el = document.getElementById('tickerStatus');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 2000);
+        }
+
+        // --- Export ticker override for use by other screens ---
+        function getTickerOverride() {
+            return localStorage.getItem(TICKER_KEY) || '';
+        }
+
+                loadScreens();
+        renderScreens();
+        loadTickerOverride();
     </script>
 </body>
 

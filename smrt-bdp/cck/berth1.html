@@ -303,6 +303,41 @@
             setInterval(fetchBusData, 30000);
         }
         init();
+
+        // --- Ticker Message Override Support ---
+        function applyTickerOverride() {
+            try {
+                // Try to get override from localStorage
+                let override = null;
+                if (window.localStorage) {
+                    override = localStorage.getItem('screenManagerTickerOverride');
+                }
+                if (override && override.trim()) {
+                    document.getElementById('ticker-text').textContent = override;
+                    return;
+                }
+            } catch (e) {
+                // Ignore errors and fallback to unified ticker
+            }
+            // If no override, try unified ticker JSON
+            fetchUnifiedTicker();
+        }
+
+        async function fetchUnifiedTicker() {
+            try {
+                const response = await fetch('../../assets/ticker-message.json');
+                if (!response.ok) throw new Error('Ticker JSON not found');
+                const data = await response.json();
+                if (data && data.message) {
+                    document.getElementById('ticker-text').textContent = data.message;
+                }
+            } catch (err) {
+                // Fallback: keep the default ticker message in HTML
+            }
+        }
+
+        // Call this after DOM is ready
+        applyTickerOverride();
     </script>
 
 </body>

@@ -25,7 +25,7 @@ body {
 .title {
     font-size: 60px;
     font-weight: bold;
-    color: #e60012;
+    color: #ea1c2d;
     text-align: center;
     flex: 1;
 }
@@ -37,17 +37,17 @@ body {
 
 .clock-time {
     font-size: 80px;
-    color: #e60012;
+    color: #ea1c2d;
     font-weight: normal;
 }
 
 .clock-date {
     font-size: 30px;
-    color: #e60012;
+    color: #ea1c2d;
 }
 
 thead .redbar-head th {
-    background: #e60012;
+    background: #ea1c2d;
     color: #fff;
     font-size: 40px;
     padding-left: 0.1em;
@@ -90,7 +90,7 @@ th {
     font-size: 1.2rem;
     font-weight: 500;
     background: #fff;
-    color: #e60012;
+    color: #ea1c2d;
 }
 
 tr {
