@@ -54,31 +54,38 @@
 
 <body>
     <h1>Screen Management</h1>
-    <!-- Type Dropdown -->
-    <label for="typeSelect" style="font-weight:bold;">Type:</label>
-    <select id="typeSelect" onchange="renderScreens()" style="margin: 0 16px 16px 8px; padding:4px 8px;">
-        <option value="ALL">All</option>
-        <option value="BDP">BDP</option>
-        <option value="MDP">MDP</option>
-    </select>
+    <div>
+        <!-- Type Dropdown -->
+        <label for="typeSelect" style="font-weight:bold;">Type:</label>
+        <select id="typeSelect" onchange="renderScreens()" style="margin: 0 16px 16px 8px; padding:4px 8px;">
+            <option value="ALL">All</option>
+            <option value="BDP">BDP</option>
+            <option value="MDP">MDP</option>
+        </select>
 
-    <!-- Location Dropdown -->
-    <label for="locationSelect" style="font-weight:bold;">Location:</label>
-    <select id="locationSelect" onchange="renderScreens()" style="margin: 0 0 16px 8px; padding:4px 8px;">
-        <option value="ALL">All</option>
-    </select>
+        <!-- Location Dropdown -->
+        <label for="locationSelect" style="font-weight:bold;">Location:</label>
+        <select id="locationSelect" onchange="renderScreens()" style="margin: 0 0 16px 8px; padding:4px 8px;">
+            <option value="ALL">All</option>
+        </select>
+    </div>
 
     <!-- Add Screen Modal Trigger -->
-    <button onclick="openAddModal()" style="margin-bottom:16px;">Add</button>
+    <button onclick="openAddModal()" style="margin-bottom:16px;">Add Screen</button>
 
     <!-- Import Config Button and File Input -->
     <input type="file" id="importConfigInput" accept=".json" style="display:none" onchange="importConfigFile(event)">
-    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import Config</button>
+    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import
+        Config</button>
+    <button onclick="exportConfig()" style="margin-left:8px;">Export Config</button>
+
 
     <!-- Ticker Message Setting -->
-    <div style="margin: 24px 0 16px 0; padding: 40px 40px 40px 30px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
+    <div
+        style="margin: 24px 0 16px 0; padding: 40px 40px 40px 30px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
         <h3 style="margin-top:0;">Override Ticker Message</h3>
-        <textarea id="tickerOverride" rows="2" style="width:100%;padding:8px;resize: vertical;" placeholder="Leave blank to use default/unified ticker message"></textarea>
+        <textarea id="tickerOverride" rows="2" style="width:100%;padding:8px;resize: vertical;"
+            placeholder="Leave blank to use default/unified ticker message"></textarea>
         <div style="margin-top:8px; text-align:right;">
             <button onclick="saveTickerOverride()" style="margin-right:8px;">Save</button>
             <button onclick="clearTickerOverride()">Clear</button>
@@ -270,37 +277,48 @@
         loadScreens();
         renderScreens();
 
-function importConfigFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const importedScreens = JSON.parse(e.target.result);
-            if (Array.isArray(importedScreens)) {
-                // Ensure each screen has a category field
-                screens = importedScreens.map(screen => {
-                    let category = screen.category;
-                    if (!category && screen.name) {
-                        category = screen.name.split('-')[0].toLowerCase();
+        function importConfigFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    let importedScreens = [];
+                    let importedTicker = '';
+                    if (Array.isArray(imported)) {
+                        // Backward compatibility: old format (array)
+                        importedScreens = imported;
+                    } else if (imported && Array.isArray(imported.screens)) {
+                        importedScreens = imported.screens;
+                        importedTicker = imported.tickerOverride || '';
+                    } else {
+                        alert('Invalid config file format.');
+                        return;
                     }
-                    return { ...screen, category };
-                });
-                saveScreens();
-                renderScreens();
-                alert('Config imported successfully.');
-            } else {
-                alert('Invalid config file format.');
-            }
-        } catch (err) {
-            alert('Error parsing config file.');
+                    // Ensure each screen has a category field
+                    screens = importedScreens.map(screen => {
+                        let category = screen.category;
+                        if (!category && screen.name) {
+                            category = screen.name.split('-')[0].toLowerCase();
+                        }
+                        return { ...screen, category };
+                    });
+                    saveScreens();
+                    if (typeof importedTicker === 'string') {
+                        localStorage.setItem('screenManagerTickerOverride', importedTicker);
+                        document.getElementById('tickerOverride').value = importedTicker;
+                    }
+                    renderScreens();
+                    alert('Config imported successfully.');
+                } catch (err) {
+                    alert('Error parsing config file.');
+                }
+                event.target.value = ''; // Reset input
+            };
+            reader.readAsText(file);
         }
-        event.target.value = ''; // Reset input
-    };
-    reader.readAsText(file);
-}
-
- // --- Ticker Message Override Logic ---
+        // --- Ticker Message Override Logic ---
         const TICKER_KEY = 'screenManagerTickerOverride';
 
         function loadTickerOverride() {
@@ -332,9 +350,26 @@ function importConfigFile(event) {
             return localStorage.getItem(TICKER_KEY) || '';
         }
 
-                loadScreens();
+        loadScreens();
         renderScreens();
         loadTickerOverride();
+
+        function exportConfig() {
+            const tickerOverride = localStorage.getItem('screenManagerTickerOverride') || '';
+            const config = {
+                screens: screens,
+                tickerOverride: tickerOverride
+            };
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'screen-config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 
