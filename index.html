@@ -1,398 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Screen Management | SMRT Buses</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f7f7f7;
-        }
-
-        h1 {
-            color: #b00;
-        }
-
-        .screen-list {
-            margin: 20px 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-        }
-
-        th,
-        td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #eee;
-        }
-
-        .actions button {
-            margin-right: 8px;
-        }
-
-        .add-form {
-            padding-left: 3em;
-            padding-right: 3em;
-        }
-
-        .add-form input {
-            padding: 6px;
-            margin-right: 8px;
-            margin-top: 1em;
-            margin-bottom: 1em;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit Station Display</title>
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.2.0/css/all.css" />
+    <link rel="stylesheet" href="assets/css/transit-ui.css">
 </head>
-
 <body>
-    <h1>Screen Management</h1>
-    <div>
-        <!-- Type Dropdown -->
-        <label for="typeSelect" style="font-weight:bold;">Type:</label>
-        <select id="typeSelect" onchange="renderScreens()" style="margin: 0 16px 16px 8px; padding:4px 8px;">
-            <option value="ALL">All</option>
-            <option value="BDP">BDP</option>
-            <option value="MDP">MDP</option>
-        </select>
+    <div class="container">
+        <!-- Main Display -->
+        <main class="display-panel">
 
-        <!-- Location Dropdown -->
-        <label for="locationSelect" style="font-weight:bold;">Location:</label>
-        <select id="locationSelect" onchange="renderScreens()" style="margin: 0 0 16px 8px; padding:4px 8px;">
-            <option value="ALL">All</option>
-        </select>
-    </div>
+            <!-- Video Display -->
+            <div class="video-container">
+                <img class="station-video" src="assets/DC-CDD_Blank.png" alt="Station Display Blank">
+                <video class="station-video-temp" style="display: none;">
+                    <source src="video/DC-CDD.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <audio id="doorsAudio" style="display: none;">
+                    <source src="announcements/dc-ann.wav" type="audio/wav">
+                </audio>
+            </div>
 
-    <!-- Add Screen Modal Trigger -->
-    <button onclick="openAddModal()" style="margin-bottom:16px;">Add Screen</button>
+            <!-- Station Display -->
+            <div class="station-display">
+                <video class="station-video-cld">
+                    <source src="video/DC-CLD.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </main>
 
-    <!-- Add Screen Modal -->
-    <div id="addScreenModal"
-        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
-        <div
-            style="background:#fff; padding:32px 24px; border-radius:8px; min-width:320px; max-width:90vw; margin:40px auto; position:relative;">
-            <h2 style="margin-top:0;">Add Screen</h2>
-            <div class="add-form">
-                <input id="category" placeholder="Category (e.g. BPJ)" style="width:100%;margin-bottom:8px;" />
-                <input id="screenType" placeholder="Type (BDP/MDP)" style="width:100%;margin-bottom:8px;" />
-                <input id="screenName" placeholder="Screen Name" style="width:100%;margin-bottom:8px;" />
-                <input id="screenUrl" placeholder="Screen URL" style="width:100%;margin-bottom:16px;" />
-                <div style="text-align:right;">
-                    <button onclick="addScreen()">Add</button>
-                    <button onclick="closeAddModal()" style="margin-left:8px;">Cancel</button>
+        <!-- Control Buttons -->
+        <footer class="control-panel">
+            <button class="control-button doors-btn" data-action="doors">
+                <span class="btn-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
+                <span class="btn-text">Doors Closing</span>
+            </button>
+            <button class="control-button " data-action="prev">
+                <span class="btn-icon"><i class="fa-solid fa-location-dot"></i></span>
+                <span class="btn-text">Current Station</span>
+            </button>
+            <button class="control-button next-btn" data-action="next">
+                <span class="btn-icon"><i class="fa-solid fa-angles-right"></i></span>
+                <span class="btn-text">Next Station</span>
+            </button>
+            <button class="control-button messages-btn" data-action="messages">
+                <span class="btn-icon"><i class="fa-solid fa-message"></i></span>
+                <span class="btn-text">Messages</span>
+            </button>
+        </footer>
+
+        <!-- Modal for Messages -->
+        <div id="messagesModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Messages</h2>
+                    <button class="modal-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="message-categories">
+                        <button class="category-btn active" data-category="alert">🚨 Alerts</button>
+                        <button class="category-btn" data-category="safety">⚠️ Safety</button>
+                        <button class="category-btn" data-category="service">🔧 Service</button>
+                        <button class="category-btn" data-category="info">ℹ️ Info</button>
+                    </div>
+                    <div class="messages-list" id="messagesList">
+                        <!-- Messages will be populated here -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Import Config Button and File Input -->
-    <input type="file" id="importConfigInput" accept=".json" style="display:none" onchange="importConfigFile(event)">
-    <button onclick="document.getElementById('importConfigInput').click()" style="margin-left:8px;">Import
-        Config</button>
-    <button onclick="exportConfig()" style="margin-left:8px;">Export Config</button>
-
-
-    <!-- Ticker Message Setting -->
-    <div
-        style="margin: 24px 0 16px 0; padding: 40px 40px 40px 30px; background: #fff; border: 1px solid #ddd; border-radius: 8px;">
-        <h3 style="margin-top:0;">Override Ticker Message</h3>
-        <textarea id="tickerOverride" rows="2" style="width:100%;padding:8px;resize: vertical;"
-            placeholder="Leave blank to use default/unified ticker message"></textarea>
-        <div style="margin-top:8px; text-align:right;">
-            <button onclick="saveTickerOverride()" style="margin-right:8px;">Save</button>
-            <button onclick="clearTickerOverride()">Clear</button>
+        <!-- Modal for Stations -->
+        <div id="stationsModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Select Station</h2>
+                    <button class="modal-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="stations-list" id="stationsList">
+                        <!-- Stations will be populated here -->
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="tickerStatus" style="color:green; margin-top:8px; display:none;"></div>
+
+        <!-- Status Toast -->
+        <div id="statusToast" class="status-toast hidden"></div>
     </div>
 
-    <!-- Modal Structure -->
-    <!-- ...existing modal code... -->
-
-    <div id="sectionsContainer">
-        <!-- Sections will be rendered here -->
-    </div>
-
-
-    <!------------------------------------ Functionalities ------------------------------------>
-    <script>
-        // Load from localStorage or use example initial data
-        let screens = [];
-        const STORAGE_KEY = 'screenManagerScreens';
-
-        function loadScreens() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                try {
-                    screens = JSON.parse(data);
-                } catch {
-                    screens = [];
-                }
-            } else {
-                screens = [];
-            }
-        }
-
-        function saveScreens() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(screens));
-        }
-
-        function getSections() {
-            const sections = {};
-            screens.forEach((screen, idx) => {
-                const section = screen.name.split('-')[0].toUpperCase();
-                if (!sections[section]) sections[section] = [];
-                sections[section].push({ ...screen, idx });
-            });
-            return sections;
-        }
-
-        function getAllLocations(typeFilter = "ALL") {
-            // Get unique section names from screens, filtered by type if needed
-            const locations = new Set();
-            screens.forEach(screen => {
-                if (typeFilter === "ALL" || (screen.type && screen.type.toUpperCase() === typeFilter)) {
-                    const section = screen.name.split('-')[0].toUpperCase();
-                    locations.add(section);
-                }
-            });
-            return Array.from(locations).sort();
-        }
-
-        function renderLocationDropdown() {
-            const select = document.getElementById('locationSelect');
-            const type = document.getElementById('typeSelect').value;
-            // Save current selection
-            const prev = select.value;
-            // Remove all except "All"
-            select.innerHTML = '<option value="ALL">All</option>';
-            getAllLocations(type).forEach(loc => {
-                const opt = document.createElement('option');
-                opt.value = loc;
-                opt.textContent = loc;
-                select.appendChild(opt);
-            });
-            // Restore previous selection if possible
-            if ([...select.options].some(o => o.value === prev)) {
-                select.value = prev;
-            }
-        }
-
-        function renderScreens() {
-            renderLocationDropdown();
-            const container = document.getElementById('sectionsContainer');
-            container.innerHTML = '';
-            const sections = getSections();
-            const selectedLoc = document.getElementById('locationSelect').value;
-            const selectedType = document.getElementById('typeSelect').value;
-            let filteredSections = {};
-
-            // Filter screens by type and location
-            Object.keys(sections).forEach(section => {
-                const filtered = sections[section].filter(screen => {
-                    const typeMatch = selectedType === "ALL" || (screen.type && screen.type.toUpperCase() === selectedType);
-                    const locMatch = selectedLoc === "ALL" || section === selectedLoc;
-                    return typeMatch && locMatch;
-                });
-                if (filtered.length) filteredSections[section] = filtered;
-            });
-
-            Object.keys(filteredSections).sort().forEach(section => {
-                const div = document.createElement('div');
-                div.className = 'screen-list';
-                div.innerHTML = `
-                <h2>${section}</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Screen Name</th>
-                            <th>Type</th>
-                            <th>Screen URL</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filteredSections[section].map(screen => `
-                            <tr>
-                                <td>${screen.name}</td>
-                                <td>${screen.type ? screen.type.toUpperCase() : ''}</td>
-                                <td><a href="${screen.url}" target="_blank">${screen.url}</a></td>
-                                <td class="actions">
-                                    <button onclick="editScreen(${screen.idx})">Edit</button>
-                                    <button onclick="removeScreen(${screen.idx})">Remove</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-                container.appendChild(div);
-            });
-        }
-
-        // Modal logic
-        function openAddModal() {
-            document.getElementById('addScreenModal').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('category').focus();
-            }, 100);
-        }
-        function closeAddModal() {
-            document.getElementById('addScreenModal').style.display = 'none';
-            document.getElementById('category').value = '';
-            document.getElementById('screenType').value = '';
-            document.getElementById('screenName').value = '';
-            document.getElementById('screenUrl').value = '';
-        }
-
-        // Override addScreen to close modal after adding
-        function addScreen() {
-            const category = document.getElementById('category').value.trim();
-            const type = document.getElementById('screenType').value.trim().toUpperCase();
-            const name = document.getElementById('screenName').value.trim();
-            const url = document.getElementById('screenUrl').value.trim();
-            if (!category || !type || !name || !url) {
-                alert('Please enter category, type, name and URL.');
-                return;
-            }
-            // Ensure screen name starts with category
-            let finalName = name;
-            if (!name.toLowerCase().startsWith(category.toLowerCase() + '-')) {
-                finalName = category.toLowerCase() + '-' + name;
-            }
-            screens.push({ name: finalName, url, type });
-            saveScreens();
-            closeAddModal();
-            renderScreens();
-        }
-
-        function removeScreen(idx) {
-            if (confirm('Remove this screen?')) {
-                screens.splice(idx, 1);
-                saveScreens();
-                renderScreens();
-            }
-        }
-
-        function editScreen(idx) {
-            const screen = screens[idx];
-            const newName = prompt('Edit screen name:', screen.name);
-            if (newName === null) return;
-            const newType = prompt('Edit type (BDP/MDP):', screen.type || '');
-            if (newType === null) return;
-            const newUrl = prompt('Edit screen URL:', screen.url);
-            if (newUrl === null) return;
-            screens[idx] = { name: newName.trim(), url: newUrl.trim(), type: newType.trim().toUpperCase() };
-            saveScreens();
-            renderScreens();
-        }
-
-        loadScreens();
-        renderScreens();
-
-        function importConfigFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    let importedScreens = [];
-                    let importedTicker = '';
-                    if (Array.isArray(imported)) {
-                        // Backward compatibility: old format (array)
-                        importedScreens = imported;
-                    } else if (imported && Array.isArray(imported.screens)) {
-                        importedScreens = imported.screens;
-                        importedTicker = imported.tickerOverride || '';
-                    } else {
-                        alert('Invalid config file format.');
-                        return;
-                    }
-                    // Ensure each screen has a category field
-                    screens = importedScreens.map(screen => {
-                        let category = screen.category;
-                        if (!category && screen.name) {
-                            category = screen.name.split('-')[0].toLowerCase();
-                        }
-                        return { ...screen, category };
-                    });
-                    saveScreens();
-                    if (typeof importedTicker === 'string') {
-                        localStorage.setItem('screenManagerTickerOverride', importedTicker);
-                        document.getElementById('tickerOverride').value = importedTicker;
-                    }
-                    renderScreens();
-                    alert('Config imported successfully.');
-                } catch (err) {
-                    alert('Error parsing config file.');
-                }
-                event.target.value = ''; // Reset input
-            };
-            reader.readAsText(file);
-        }
-        // --- Ticker Message Override Logic ---
-        const TICKER_KEY = 'screenManagerTickerOverride';
-
-        function loadTickerOverride() {
-            const val = localStorage.getItem(TICKER_KEY) || '';
-            document.getElementById('tickerOverride').value = val;
-        }
-
-        function saveTickerOverride() {
-            const val = document.getElementById('tickerOverride').value.trim();
-            localStorage.setItem(TICKER_KEY, val);
-            showTickerStatus('Ticker override saved.');
-        }
-
-        function clearTickerOverride() {
-            localStorage.removeItem(TICKER_KEY);
-            document.getElementById('tickerOverride').value = '';
-            showTickerStatus('Ticker override cleared.');
-        }
-
-        function showTickerStatus(msg) {
-            const el = document.getElementById('tickerStatus');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 2000);
-        }
-
-        // --- Export ticker override for use by other screens ---
-        function getTickerOverride() {
-            return localStorage.getItem(TICKER_KEY) || '';
-        }
-
-        loadScreens();
-        renderScreens();
-        loadTickerOverride();
-
-        function exportConfig() {
-            const tickerOverride = localStorage.getItem('screenManagerTickerOverride') || '';
-            const config = {
-                screens: screens,
-                tickerOverride: tickerOverride
-            };
-            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'screen-config.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-    </script>
+    <script src="assets/js/main.js"></script>
 </body>
-
 </html>
