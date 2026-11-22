@@ -328,6 +328,32 @@
             padding: 16px 20px;
             border-bottom: 1px solid var(--line);
             font-size: 16px;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .section-heading::-webkit-details-marker {
+            display: none;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: inherit;
+        }
+
+        .section-heading::after {
+            width: 8px;
+            height: 8px;
+            margin-left: auto;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            content: "";
+            transform: rotate(-45deg);
+            transition: transform 150ms ease;
+        }
+
+        .screen-list[open] > .section-heading::after {
+            transform: rotate(45deg);
         }
 
         .section-count {
@@ -404,7 +430,8 @@
             color: #a51d32;
         }
 
-        #addScreenModal {
+        #addScreenModal,
+        #editScreenModal {
             display: none;
             position: fixed;
             inset: 0;
@@ -510,6 +537,21 @@
         </div>
     </div>
 
+    <div id="editScreenModal">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editScreenTitle">
+            <h2 id="editScreenTitle">Edit Screen</h2>
+            <form class="add-form" onsubmit="saveEditScreen(event)">
+                <input id="editScreenName" placeholder="Screen Name" aria-label="Screen Name" required />
+                <input id="editScreenType" placeholder="Type (BDP/MDP)" aria-label="Type (BDP/MDP)" required />
+                <input id="editScreenUrl" placeholder="Screen URL" aria-label="Screen URL" required />
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" onclick="closeEditModal()">Cancel</button>
+                    <button class="primary-button" type="submit">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Import Config Button and File Input -->
     <input type="file" id="importConfigInput" accept=".json" style="display:none" onchange="importConfigFile(event)">
     <!-- Ticker Message Setting -->
@@ -521,12 +563,7 @@
             <label><input type="radio" name="tickerScope" value="all" onchange="updateTickerScope()" checked> All screens</label>
             <label><input type="radio" name="tickerScope" value="selected" onchange="updateTickerScope()"> Selected locations</label>
         </div>
-        <div id="tickerLocations" class="ticker-locations">
-            <label><input type="checkbox" value="BNL"> BNL</label>
-            <label><input type="checkbox" value="BPJ"> BPJ</label>
-            <label><input type="checkbox" value="CCK"> CCK</label>
-            <label><input type="checkbox" value="WDL"> WDL</label>
-        </div>
+        <div id="tickerLocations" class="ticker-locations"></div>
         <textarea id="tickerOverride" rows="2" placeholder="Leave blank to use the default ticker message"></textarea>
         <div class="ticker-actions">
             <button class="secondary-button" onclick="clearTickerOverride()">Clear</button>
@@ -551,6 +588,8 @@
         // Load from localStorage or use example initial data
         let screens = [];
         const STORAGE_KEY = 'screenManagerScreens';
+        const expandedSections = new Set();
+        let editingScreenIndex = null;
 
         function loadScreens() {
             const data = localStorage.getItem(STORAGE_KEY);
@@ -630,6 +669,8 @@
 
         function renderScreens() {
             renderLocationDropdown();
+            renderTickerLocations();
+            renderTickerStatus();
             const container = document.getElementById('sectionsContainer');
             container.innerHTML = '';
             const sections = getSections();
@@ -648,10 +689,18 @@
             });
 
             Object.keys(filteredSections).sort().forEach(section => {
-                const div = document.createElement('div');
+                const div = document.createElement('details');
                 div.className = 'screen-list';
+                div.open = expandedSections.has(section);
+                div.addEventListener('toggle', () => {
+                    if (div.open) {
+                        expandedSections.add(section);
+                    } else {
+                        expandedSections.delete(section);
+                    }
+                });
                 div.innerHTML = `
-                <h2 class="section-heading">${section}<span class="section-count">${filteredSections[section].length}</span></h2>
+                <summary class="section-heading"><h2>${section}</h2><span class="section-count">${filteredSections[section].length}</span></summary>
                 <table>
                     <thead>
                         <tr>
@@ -695,6 +744,35 @@
             document.getElementById('screenUrl').value = '';
         }
 
+        function openEditModal(idx) {
+            const screen = screens[idx];
+            editingScreenIndex = idx;
+            document.getElementById('editScreenName').value = screen.name;
+            document.getElementById('editScreenType').value = screen.type || '';
+            document.getElementById('editScreenUrl').value = screen.url;
+            document.getElementById('editScreenModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('editScreenName').focus();
+            }, 100);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editScreenModal').style.display = 'none';
+            editingScreenIndex = null;
+        }
+
+        function saveEditScreen(event) {
+            event.preventDefault();
+            const name = document.getElementById('editScreenName').value.trim();
+            const type = document.getElementById('editScreenType').value.trim().toUpperCase();
+            const url = document.getElementById('editScreenUrl').value.trim();
+
+            screens[editingScreenIndex] = { name, url, type };
+            saveScreens();
+            closeEditModal();
+            renderScreens();
+        }
+
         // Override addScreen to close modal after adding
         function addScreen() {
             const category = document.getElementById('category').value.trim();
@@ -725,20 +803,8 @@
         }
 
         function editScreen(idx) {
-            const screen = screens[idx];
-            const newName = prompt('Edit screen name:', screen.name);
-            if (newName === null) return;
-            const newType = prompt('Edit type (BDP/MDP):', screen.type || '');
-            if (newType === null) return;
-            const newUrl = prompt('Edit screen URL:', screen.url);
-            if (newUrl === null) return;
-            screens[idx] = { name: newName.trim(), url: newUrl.trim(), type: newType.trim().toUpperCase() };
-            saveScreens();
-            renderScreens();
+            openEditModal(idx);
         }
-
-        loadScreens();
-        renderScreens();
 
         function importConfigFile(event) {
             const file = event.target.files[0];
@@ -777,8 +843,8 @@
                     if (importedTickerConfig) {
                         localStorage.setItem('screenManagerTickerOverrides', JSON.stringify(importedTickerConfig));
                     }
-                    loadTickerOverride();
                     renderScreens();
+                    loadTickerOverride();
                     alert('Config imported successfully.');
                 } catch (err) {
                     alert('Error parsing config file.');
@@ -809,10 +875,38 @@
             document.getElementById('tickerLocations').classList.toggle('active', selected);
         }
 
+        function renderTickerLocations() {
+            const container = document.getElementById('tickerLocations');
+            const selected = new Set([...container.querySelectorAll('input:checked')].map(input => input.value));
+            const locations = getAllLocations();
+            container.replaceChildren();
+
+            if (!locations.length) {
+                container.textContent = 'No locations with screens.';
+                return;
+            }
+
+            locations.forEach(location => {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.value = location;
+                input.checked = selected.has(location);
+                label.append(input, document.createTextNode(` ${location}`));
+                container.appendChild(label);
+            });
+        }
+
         function renderTickerStatus() {
             const config = getTickerConfig();
             const grid = document.getElementById('tickerStatusGrid');
-            grid.innerHTML = ['BNL', 'BPJ', 'CCK', 'WDL'].map(location => {
+            const locations = getAllLocations();
+            grid.replaceChildren();
+            if (!locations.length) {
+                grid.textContent = 'No locations with screens.';
+                return;
+            }
+            locations.forEach(location => {
                 const locationOverride = (config.locations[location] || '').trim();
                 const allOverride = (config.all || '').trim();
                 let source = 'Default';
@@ -829,22 +923,19 @@
                     state = 'override';
                 }
 
-                return `
-                    <div class="ticker-location-status ${state}">
+                const card = document.createElement('div');
+                card.className = `ticker-location-status ${state}`;
+                card.innerHTML = `
                         <div class="ticker-location-status-top">
-                            <strong>${location}</strong>
+                            <strong></strong>
                             <span class="ticker-source">${source}</span>
                         </div>
-                        <p class="ticker-location-status-text">${text.replace(/[&<>"']/g, char => ({
-                            '&': '&amp;',
-                            '<': '&lt;',
-                            '>': '&gt;',
-                            '"': '&quot;',
-                            "'": '&#039;'
-                        })[char])}</p>
-                    </div>
+                        <p class="ticker-location-status-text"></p>
                 `;
-            }).join('');
+                card.querySelector('strong').textContent = location;
+                card.querySelector('.ticker-location-status-text').textContent = text;
+                grid.appendChild(card);
+            });
         }
 
         function loadTickerOverride() {

@@ -666,7 +666,7 @@
                 storageArea: localStorage
             }));
 
-            showAlert('<i class="fas fa-check"></i> Settings saved successfully! Changes will apply when you reload the screens.', 'success');
+            showAlert('Settings saved successfully! Changes will apply when you reload the screens.', 'success');
         }
 
         // Reset to defaults
@@ -674,14 +674,23 @@
             if (confirm('Are you sure you want to reset all settings to defaults?')) {
                 localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS));
                 initializeUI();
-                showAlert('<i class="fas fa-check"></i> Settings reset to defaults', 'success');
+                showAlert('Settings reset to defaults', 'success');
             }
         }
 
         // Show alert message
         function showAlert(message, type) {
             const alertEl = type === 'success' ? document.getElementById('successAlert') : document.getElementById('infoAlert');
-            alertEl.textContent = message;
+            alertEl.textContent = '';
+            if (type === 'success') {
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-check';
+                icon.setAttribute('aria-hidden', 'true');
+                alertEl.appendChild(icon);
+                alertEl.appendChild(document.createTextNode(` ${message}`));
+            } else {
+                alertEl.textContent = message;
+            }
             alertEl.classList.add('show');
             setTimeout(() => {
                 alertEl.classList.remove('show');
