@@ -180,6 +180,17 @@ tbody tr:last-child {
     display: inline-block;
 }
 
+.clock-format-12h .time-icon-wrap span {
+    min-width: 0;
+    font-size: clamp(32px, 3.2vw, 65px) !important;
+    white-space: nowrap;
+}
+
+.clock-format-12h .bustype-icon {
+    max-width: clamp(50px, 7vw, 100px);
+    margin-left: 10px !important;
+}
+
 .table-responsive {
     width: 100%;
     overflow-x: auto;

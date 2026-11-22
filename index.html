@@ -942,7 +942,7 @@
             const config = getTickerConfig();
             const scopeAll = document.querySelector('input[name="tickerScope"][value="all"]');
             const scopeSelected = document.querySelector('input[name="tickerScope"][value="selected"]');
-            const locations = Object.keys(config.locations).filter(location => config.locations[location]);
+            const locations = getAllLocations().filter(location => config.locations[location]);
 
             if (locations.length) {
                 scopeSelected.checked = true;

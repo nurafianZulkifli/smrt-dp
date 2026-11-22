@@ -53,8 +53,10 @@ for (const location of ['bnl', 'bpj', 'cck', 'wdl']) {
         );
         const errors = [];
         const timers = [];
+        const listeners = {};
         const document = {
             getElementById: id => elements[id],
+            body: { classList: { toggle() {} } },
             querySelector: selector => elements[selector === '.title' ? 'title' : 'ticker'],
             createDocumentFragment: () => Object.assign(new Element(), { fragment: true }),
             createElement: () => new Element()
@@ -67,7 +69,7 @@ for (const location of ['bnl', 'bpj', 'cck', 'wdl']) {
         }));
         const context = vm.createContext({
             document,
-            window: { innerWidth: 1400, addEventListener() {} },
+            window: { innerWidth: 1400, addEventListener: (type, handler) => { listeners[type] = handler; } },
             localStorage: { getItem: key => key === 'mdpScreenSettings' ? JSON.stringify(settings) : null },
             setInterval: (fn, delay) => (timers.push({ fn, delay }), timers.length),
             clearInterval() {},
@@ -90,11 +92,57 @@ for (const location of ['bnl', 'bpj', 'cck', 'wdl']) {
             assert.match(tbody.children[0].innerHTML, /Train/);
             assert.match(tbody.children[0].innerHTML, /Checkpoint/);
         }
+
+        test('BDP departure times update when the clock format changes', async () => {
+            const html = fs.readFileSync(path.join(root, 'smrt-bdp', 'bpj', 'berth1.html'), 'utf8');
+            const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+            const elements = Object.fromEntries(
+                ['clock-time', 'clock-date', 'bus-table-body', 'page-indicator', 'ticker-text', 'title', 'ticker']
+                    .map(id => [id, new Element()])
+            );
+            const settings = { clockFormat: '24h' };
+            const listeners = {};
+            const context = vm.createContext({
+                document: {
+                    getElementById: id => elements[id],
+                    body: { classList: { toggle() {} } },
+                    querySelector: selector => elements[selector === '.title' ? 'title' : 'ticker'],
+                    createDocumentFragment: () => Object.assign(new Element(), { fragment: true }),
+                    createElement: () => new Element()
+                },
+                window: { innerWidth: 1400, addEventListener: (type, handler) => { listeners[type] = handler; } },
+                localStorage: { getItem: key => key === 'mdpScreenSettings' ? JSON.stringify(settings) : null },
+                setInterval() {},
+                clearInterval() {},
+                console,
+                fetch: async url => ({
+                    json: async () => url.includes('berth1.json') ? ['856']
+                        : url.includes('bus-arrivals') ? {
+                            Services: [{ ServiceNo: '856', NextBus: { EstimatedArrival: '13:34' }, NextBus2: { EstimatedArrival: '00:45' } }]
+                        } : {}
+                })
+            });
+
+            vm.runInContext(settingsScript, context);
+            vm.runInContext(script, context);
+            await new Promise(resolve => setImmediate(resolve));
+            const tbody = elements['bus-table-body'];
+            assert.match(tbody.children[0].innerHTML, /13:34/);
+            settings.clockFormat = '12h';
+            listeners.storage({ key: 'mdpScreenSettings' });
+            assert.match(tbody.children[0].innerHTML, /1:34 PM/);
+            assert.match(tbody.children[0].innerHTML, /12:45 AM/);
+        });
         const pageTimer = timers.find(timer => timer.delay === 7000);
         assert.ok(pageTimer);
         pageTimer.fn();
         assert.equal(elements['page-indicator'].textContent, location === 'wdl' ? 'Page 1/1' : 'Page 2/2');
         assert.equal(tbody.children.length, location === 'wdl' ? 3 : 1);
         assert.match(tbody.children[0].innerHTML, /12:34/);
+
+        settings.clockFormat = '12h';
+        listeners.storage({ key: 'mdpScreenSettings' });
+        assert.match(tbody.children[0].innerHTML, /12:34 PM/);
+        assert.match(tbody.children[0].innerHTML, /12:45 PM/);
     });
 }
