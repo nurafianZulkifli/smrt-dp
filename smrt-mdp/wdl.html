@@ -203,7 +203,7 @@
             const tickerRect = ticker.getBoundingClientRect();
             const rows = Array.from(tbody.querySelectorAll('tr'));
             let maxRows = rows.length;
-            const buffer = 3; // 3px buffer to ensure rows don't touch ticker
+            const buffer = 10; // 10px buffer to ensure rows don't touch ticker, accounts for zoom
             for (let i = 0; i < rows.length; i++) {
                 const rowRect = rows[i].getBoundingClientRect();
                 if (rowRect.bottom > tickerRect.top - buffer) {
@@ -306,6 +306,11 @@
         window.addEventListener('resize', updateTitleText);
         window.addEventListener('DOMContentLoaded', updateTitleText);
         updateTitleText();
+
+        // Recalculate page size on resize (accounts for zoom changes)
+        window.addEventListener('resize', () => {
+            renderTable();
+        });
 
         // --- Ticker Message Override Support ---
         function applyTickerOverride() {
