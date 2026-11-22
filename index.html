@@ -240,7 +240,7 @@
 
         .ticker-status-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -515,6 +515,7 @@
             <label><input type="checkbox" value="BNL"> BNL</label>
             <label><input type="checkbox" value="BPJ"> BPJ</label>
             <label><input type="checkbox" value="CCK"> CCK</label>
+            <label><input type="checkbox" value="WDL"> WDL</label>
         </div>
         <textarea id="tickerOverride" rows="2" placeholder="Leave blank to use the default ticker message"></textarea>
         <div class="ticker-actions">
@@ -546,6 +547,10 @@
             if (data) {
                 try {
                     screens = JSON.parse(data);
+                    if (!screens.some(screen => screen.name && screen.name.toLowerCase().startsWith('wdl-'))) {
+                        screens.push({ name: 'wdl-E1', url: 'smrt-mdp/wdl.html', type: 'MDP' });
+                        saveScreens();
+                    }
                 } catch {
                     screens = [];
                 }
@@ -561,7 +566,8 @@
                     { name: 'cck-B3', url: 'smrt-bdp/cck/berth3.html', type: 'BDP' },
                     { name: 'cck-B4', url: 'smrt-bdp/cck/berth4.html', type: 'BDP' },
                     { name: 'cck-B5', url: 'smrt-bdp/cck/berth5.html', type: 'BDP' },
-                    { name: 'cck-E1', url: 'smrt-mdp/cck.html', type: 'MDP' }
+                    { name: 'cck-E1', url: 'smrt-mdp/cck.html', type: 'MDP' },
+                    { name: 'wdl-E1', url: 'smrt-mdp/wdl.html', type: 'MDP' }
                 ];
                 saveScreens();
             }
@@ -796,7 +802,7 @@
         function renderTickerStatus() {
             const config = getTickerConfig();
             const grid = document.getElementById('tickerStatusGrid');
-            grid.innerHTML = ['BNL', 'BPJ', 'CCK'].map(location => {
+            grid.innerHTML = ['BNL', 'BPJ', 'CCK', 'WDL'].map(location => {
                 const locationOverride = (config.locations[location] || '').trim();
                 const allOverride = (config.all || '').trim();
                 let source = 'Default';
