@@ -39,28 +39,6 @@ test('fresh screen configuration includes the exported locations', () => {
             name: `${location}-E1`, url: `smrt-mdp/${location}.html`, type: 'MDP'
         });
 
-        test('generator detects new display pages and ignores unrelated files', () => {
-            const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'screen-manifest-'));
-            try {
-                fs.mkdirSync(path.join(directory, 'smrt-mdp'));
-                fs.mkdirSync(path.join(directory, 'smrt-bdp', 'new'), { recursive: true });
-                fs.writeFileSync(path.join(directory, 'smrt-mdp', 'new.html'), '');
-                fs.writeFileSync(path.join(directory, 'smrt-mdp', 'index.html'), '');
-                fs.writeFileSync(path.join(directory, 'smrt-bdp', 'new', 'berth2.html'), '');
-                fs.writeFileSync(path.join(directory, 'smrt-bdp', 'new', 'other.html'), '');
-
-                assert.deepEqual(discoverScreens(directory), [
-                    { name: 'new-B2', url: 'smrt-bdp/new/berth2.html', type: 'BDP' },
-                    { name: 'new-E1', url: 'smrt-mdp/new.html', type: 'MDP' }
-                ]);
-            } finally {
-                fs.rmSync(directory, { recursive: true, force: true });
-            }
-        });
-
-        test('checked-in manifest matches the available display pages', () => {
-            assert.equal(manifest, generateManifest(root));
-        });
     }
 });
 
@@ -70,4 +48,27 @@ test('existing screen configuration is not replaced by new defaults', () => {
         { name: 'custom-E1', url: 'custom.html', type: 'MDP' }
     ];
     assert.deepEqual(loadScreens(saved), saved);
+});
+
+test('generator detects new display pages and ignores unrelated files', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'screen-manifest-'));
+    try {
+        fs.mkdirSync(path.join(directory, 'smrt-mdp'));
+        fs.mkdirSync(path.join(directory, 'smrt-bdp', 'new'), { recursive: true });
+        fs.writeFileSync(path.join(directory, 'smrt-mdp', 'new.html'), '');
+        fs.writeFileSync(path.join(directory, 'smrt-mdp', 'index.html'), '');
+        fs.writeFileSync(path.join(directory, 'smrt-bdp', 'new', 'berth2.html'), '');
+        fs.writeFileSync(path.join(directory, 'smrt-bdp', 'new', 'other.html'), '');
+
+        assert.deepEqual(discoverScreens(directory), [
+            { name: 'new-B2', url: 'smrt-bdp/new/berth2.html', type: 'BDP' },
+            { name: 'new-E1', url: 'smrt-mdp/new.html', type: 'MDP' }
+        ]);
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test('checked-in manifest matches the available display pages', () => {
+    assert.equal(manifest, generateManifest(root));
 });
