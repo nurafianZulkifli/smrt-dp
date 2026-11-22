@@ -1,8 +1,16 @@
+html {
+    height: 100%;
+}
+
 body {
     font-family: system-ui, Avenir, Arial, sans-serif;
     margin: 0;
     background: #fff;
     color: #000;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .header {
@@ -79,11 +87,13 @@ table {
 
 th,
 td {
-    padding-top: 0.1em;
+    padding-top: 0.3em;
     padding-bottom: 0.3em;
     text-align: center;
     font-size: 50px;
     font-weight: bold;
+    vertical-align: middle;
+    min-height: 1.7em;
 }
 
 th {
@@ -91,10 +101,13 @@ th {
     font-weight: 500;
     background: #fff;
     color: #ea1c2d;
+    height: auto;
+    min-height: auto;
 }
 
 tr {
     border-bottom: 1px solid #000;
+    min-height: 1.4em;
 }
 
 td:first-child {
@@ -135,15 +148,17 @@ tbody tr:last-child {
 }
 
 .direction {
-    font-size: 36px;
+    font-size: 35px;
     font-weight: normal;
     text-align: left;
     padding-left: 0.25em;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    line-height: 1.1;
+    display: inline;
+    line-height: 1;
+}
+
+.direction > div {
+    margin: 0;
+    padding: 0;
 }
 
 @media (max-width: 741px) {
@@ -154,7 +169,13 @@ tbody tr:last-child {
     }
 
     .direction {
-        font-size: 20px;
+        font-size: 20px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .direction {
+        font-size: 20px !important;
     }
 }
 
@@ -213,7 +234,9 @@ tbody tr:last-child {
 
 .table-responsive {
     width: 100%;
-    overflow-x: auto;
+    flex: 1;
+    overflow: hidden;
+    padding-bottom: 60px;
 }
 
 
@@ -384,6 +407,8 @@ tbody tr:last-child {
 
     .table-responsive {
         width: 100% !important;
-        overflow-x: auto !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        padding-bottom: 60px !important;
     }
 }
