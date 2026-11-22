@@ -300,11 +300,15 @@
         // --- Ticker Message Override Support ---
         function applyTickerOverride() {
             try {
-                // Try to get override from localStorage
+                const location = 'BPJ';
                 let override = null;
-                if (window.localStorage) {
-                    override = localStorage.getItem('screenManagerTickerOverride');
+                const storedOverrides = localStorage.getItem('screenManagerTickerOverrides');
+                if (storedOverrides) {
+                    const config = JSON.parse(storedOverrides);
+                    override = config.locations && config.locations[location];
+                    if (!override) override = config.all;
                 }
+                if (!override) override = localStorage.getItem('screenManagerTickerOverride');
                 if (override && override.trim()) {
                     document.getElementById('ticker-text').textContent = override;
                     return;
