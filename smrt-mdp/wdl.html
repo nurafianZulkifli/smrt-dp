@@ -182,13 +182,13 @@
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
-                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
+                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 65px;">` : ''}
                 </span>
             </td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next2 ? next2 : ''}</span>
-                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
+                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 65px;">` : ''}
                 </span>
             </td>
         `;
@@ -203,9 +203,10 @@
             const tickerRect = ticker.getBoundingClientRect();
             const rows = Array.from(tbody.querySelectorAll('tr'));
             let maxRows = rows.length;
+            const buffer = 3; // 3px buffer to ensure rows don't touch ticker
             for (let i = 0; i < rows.length; i++) {
                 const rowRect = rows[i].getBoundingClientRect();
-                if (rowRect.bottom > tickerRect.top) {
+                if (rowRect.bottom > tickerRect.top - buffer) {
                     maxRows = i;
                     break;
                 }
@@ -254,13 +255,13 @@
             <td>
                 <span class="time-icon-wrap">
                     <span>${next ? next : ''}</span>
-                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
+                    ${bus.NextBus?.Type ? `<img src="../assets/${bus.NextBus.Type.toLowerCase()}-mono.png" alt="${bus.NextBus.Type}" class="img-fluid bustype-icon" style="width: 75px;">` : ''}
                 </span>
             </td>
             <td>
                 <span class="time-icon-wrap">
                     <span>${next2 ? next2 : ''}</span>
-                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 80px;">` : ''}
+                    ${bus.NextBus2?.Type ? `<img src="../assets/${bus.NextBus2.Type.toLowerCase()}-mono.png" alt="${bus.NextBus2.Type}" class="img-fluid bustype-icon" style="width: 75px;">` : ''}
                 </span>
             </td>
         `;

@@ -236,7 +236,6 @@ tbody tr:last-child {
     width: 100%;
     flex: 1;
     overflow: hidden;
-    padding-bottom: 60px;
 }
 
 
@@ -409,6 +408,5 @@ tbody tr:last-child {
         width: 100% !important;
         flex: 1 !important;
         overflow: hidden !important;
-        padding-bottom: 60px !important;
     }
 }
