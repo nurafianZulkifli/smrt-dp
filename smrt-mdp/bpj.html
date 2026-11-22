@@ -198,17 +198,7 @@
             const tickerRect = ticker.getBoundingClientRect();
             const rows = Array.from(tbody.querySelectorAll('tr'));
             let maxRows = rows.length;
-            
-            // Check if any visible rows have directions to adjust buffer dynamically
-            let hasDirections = false;
-            for (let i = 0; i < rows.length; i++) {
-                const service = allServices[i] ? (allServices[i].ServiceNo || allServices[i].service || '') : '';
-                if (directionMap[service]) {
-                    hasDirections = true;
-                    break;
-                }
-            }
-            const buffer = SettingsUtil.getPaginationBuffer(hasDirections);
+            const buffer = SettingsUtil.getPaginationBuffer(false);
 
             for (let i = 0; i < rows.length; i++) {
                 const rowRect = rows[i].getBoundingClientRect();
