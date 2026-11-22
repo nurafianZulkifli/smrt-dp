@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Woodleigh Interchange | SMRT Buses</title>
+    <title>Woodleigh ITH | SMRT Buses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/mdp.css">
     <script src="js/settings-util.js"></script>
@@ -14,7 +14,7 @@
         <div class="logo">
             <img src="../assets/smrt.png" alt="SMRT Logo">
         </div>
-        <div class="title"></div>
+        <div class="title">Woodleigh ITH</div>
         <div class="clock">
             <div class="clock-time" id="clock-time"></div>
             <div class="clock-date" id="clock-date"></div>
@@ -45,7 +45,7 @@
     <div class="ticker-wrap">
         <div class="ticker">
             <span id="ticker-text">
-                Welcome to Woodleigh Bus Interchange!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT Buses.
+                Welcome to Woodleigh Integrated Transport Hub!&nbsp;&nbsp;&nbsp;Thank you for travelling with SMRT Buses.
             </span>
         </div>
     </div>
@@ -254,11 +254,11 @@
             const titleEl = document.querySelector('.title');
             if (!titleEl) return;
             if (window.innerWidth < 1120) {
-                titleEl.textContent = "EUN Int";
+                titleEl.textContent = "WLG Int";
             } else if (window.innerWidth < 1500) {
-                titleEl.textContent = "EUN Interchange";
+                titleEl.textContent = "WLG ITH";
             } else {
-                titleEl.textContent = "Eunos Interchange";
+                titleEl.textContent = "Woodleigh ITH";
             }
         }
         window.addEventListener('resize', updateTitleText);
@@ -273,7 +273,7 @@
         // --- Ticker Message Override Support ---
         function applyTickerOverride() {
             try {
-                const location = 'EUN';
+                const location = 'WLG';
                 let override = null;
                 const storedOverrides = localStorage.getItem('screenManagerTickerOverrides');
                 if (storedOverrides) {

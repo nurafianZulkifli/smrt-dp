@@ -93,46 +93,6 @@ for (const location of ['bnl', 'bpj', 'cck', 'wdl']) {
             assert.match(tbody.children[0].innerHTML, /Checkpoint/);
         }
 
-        test('BDP departure times update when the clock format changes', async () => {
-            const html = fs.readFileSync(path.join(root, 'smrt-bdp', 'bpj', 'berth1.html'), 'utf8');
-            const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-            const elements = Object.fromEntries(
-                ['clock-time', 'clock-date', 'bus-table-body', 'page-indicator', 'ticker-text', 'title', 'ticker']
-                    .map(id => [id, new Element()])
-            );
-            const settings = { clockFormat: '24h' };
-            const listeners = {};
-            const context = vm.createContext({
-                document: {
-                    getElementById: id => elements[id],
-                    body: { classList: { toggle() {} } },
-                    querySelector: selector => elements[selector === '.title' ? 'title' : 'ticker'],
-                    createDocumentFragment: () => Object.assign(new Element(), { fragment: true }),
-                    createElement: () => new Element()
-                },
-                window: { innerWidth: 1400, addEventListener: (type, handler) => { listeners[type] = handler; } },
-                localStorage: { getItem: key => key === 'mdpScreenSettings' ? JSON.stringify(settings) : null },
-                setInterval() {},
-                clearInterval() {},
-                console,
-                fetch: async url => ({
-                    json: async () => url.includes('berth1.json') ? ['856']
-                        : url.includes('bus-arrivals') ? {
-                            Services: [{ ServiceNo: '856', NextBus: { EstimatedArrival: '13:34' }, NextBus2: { EstimatedArrival: '00:45' } }]
-                        } : {}
-                })
-            });
-
-            vm.runInContext(settingsScript, context);
-            vm.runInContext(script, context);
-            await new Promise(resolve => setImmediate(resolve));
-            const tbody = elements['bus-table-body'];
-            assert.match(tbody.children[0].innerHTML, /13:34/);
-            settings.clockFormat = '12h';
-            listeners.storage({ key: 'mdpScreenSettings' });
-            assert.match(tbody.children[0].innerHTML, /1:34 PM/);
-            assert.match(tbody.children[0].innerHTML, /12:45 AM/);
-        });
         const pageTimer = timers.find(timer => timer.delay === 7000);
         assert.ok(pageTimer);
         pageTimer.fn();
@@ -146,3 +106,44 @@ for (const location of ['bnl', 'bpj', 'cck', 'wdl']) {
         assert.match(tbody.children[0].innerHTML, /12:45 PM/);
     });
 }
+
+test('BDP departure times update when the clock format changes', async () => {
+    const html = fs.readFileSync(path.join(root, 'smrt-bdp', 'bpj', 'berth1.html'), 'utf8');
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const elements = Object.fromEntries(
+        ['clock-time', 'clock-date', 'bus-table-body', 'page-indicator', 'ticker-text', 'title', 'ticker']
+            .map(id => [id, new Element()])
+    );
+    const settings = { clockFormat: '24h' };
+    const listeners = {};
+    const context = vm.createContext({
+        document: {
+            getElementById: id => elements[id],
+            body: { classList: { toggle() {} } },
+            querySelector: selector => elements[selector === '.title' ? 'title' : 'ticker'],
+            createDocumentFragment: () => Object.assign(new Element(), { fragment: true }),
+            createElement: () => new Element()
+        },
+        window: { innerWidth: 1400, addEventListener: (type, handler) => { listeners[type] = handler; } },
+        localStorage: { getItem: key => key === 'mdpScreenSettings' ? JSON.stringify(settings) : null },
+        setInterval() {},
+        clearInterval() {},
+        console,
+        fetch: async url => ({
+            json: async () => url.includes('berth1.json') ? ['856']
+                : url.includes('bus-arrivals') ? {
+                    Services: [{ ServiceNo: '856', NextBus: { EstimatedArrival: '13:34' }, NextBus2: { EstimatedArrival: '00:45' } }]
+                } : {}
+        })
+    });
+
+    vm.runInContext(settingsScript, context);
+    vm.runInContext(script, context);
+    await new Promise(resolve => setImmediate(resolve));
+    const tbody = elements['bus-table-body'];
+    assert.match(tbody.children[0].innerHTML, /13:34/);
+    settings.clockFormat = '12h';
+    listeners.storage({ key: 'mdpScreenSettings' });
+    assert.match(tbody.children[0].innerHTML, /1:34 PM/);
+    assert.match(tbody.children[0].innerHTML, /12:45 AM/);
+});
