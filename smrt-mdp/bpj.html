@@ -6,6 +6,7 @@
     <title>Bukit Panjang ITH | SMRT Buses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/mdp.css">
+    <script src="js/settings-util.js"></script>
 </head>
 
 <body>
@@ -207,8 +208,8 @@
                     break;
                 }
             }
-            const buffer = hasDirections ? 25 : 10; // 25px for direction rows, 10px for others
-            
+            const buffer = SettingsUtil.getPaginationBuffer(hasDirections);
+
             for (let i = 0; i < rows.length; i++) {
                 const rowRect = rows[i].getBoundingClientRect();
                 if (rowRect.bottom > tickerRect.top - buffer) {
@@ -278,18 +279,20 @@
         // Patch startPageLoop to use dynamicPageSize if set
         function startPageLoop() {
             if (pageInterval) clearInterval(pageInterval);
+            const interval = SettingsUtil.getPageInterval();
             pageInterval = setInterval(() => {
                 const dynamicSize = window.dynamicPageSize || pageSize;
                 const totalPages = Math.ceil(allServices.length / dynamicSize) || 1;
                 currentPage = currentPage >= totalPages ? 1 : currentPage + 1;
                 renderTable();
-            }, 7000);
+            }, interval);
         }
 
         async function init() {
             await fetchBerthMap();
             await fetchBusData();
-            setInterval(fetchBusData, 30000);
+            const busDataInterval = SettingsUtil.getBusDataInterval();
+            setInterval(fetchBusData, busDataInterval);
         }
         init();
 
